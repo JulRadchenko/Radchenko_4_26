@@ -1,0 +1,131 @@
+# Вариант 26. Формируется матрица F следующим образом: скопировать в нее А и если в С количество нулей в нечетных
+# столбцах больше, чем произведение чисел по периметру, то поменять местами В и С симметрично, иначе В и Е поменять
+# местами несимметрично. При этом матрица А не меняется. После чего если определитель матрицы А больше суммы
+# диагональных элементов матрицы F, то вычисляется выражение: A^-1*A^T–K*F, иначе вычисляется выражение (A+G^-1-F^-1)*K,
+# где G - нижняя треугольная матрица, полученная из А. Выводятся по мере формирования А, F и все матричные операции
+# последовательно.
+import numpy as np
+import matplotlib.pyplot as plt
+print("Число N больше 4:", end='')
+N = int(input())
+print("Введите число K:", end='')
+K = int(input())
+A = np.random.randint(-10,10, (N,N), dtype="int64")
+F = np.copy(A)
+col_nech = 0
+col_ver = 0
+col_gor = 0
+per = 1
+opr = 0
+diag = 0
+S1 = 0
+S2 = 0
+Proiz = 1
+if N >= 2:
+    print("Основная матрица:")
+    print(A)
+    for i in range(N//2, N):
+        if i//2 == 0:
+            if F[i] == 0:
+                col_nech += 1
+    for i in range(N // 2, N):
+        per *= F[0, i]
+    for i in range(1, N // 2):
+        per *= F[i, N // 2]
+    for i in range((N // 2) + 1, N):
+        per *= F[(N // 2) - 1, i]
+    for i in range(1, (N // 2) - 1):
+        per *= F[i, N - 1]
+    print("Колчество нулей в нечётных столбцах:",col_nech)
+    print("Произведение чисел по периметру:",per)
+    if col_nech > per:
+        for i in range(0, (N//2)-1):
+            for j in range(N//2):
+                F[i, j], F[i, j + N//2] = F[i, j + N//2], F[i, j]
+    elif col_nech <= per:
+        for i in range(0, (N//2)-1):
+            for j in range(N//2):
+                F[i, j], F[i + (N//2), j + (N//2)] = F[i + (N//2), j + (N//2)], F[i, j]
+    print('Матрица F:')
+    print(F)
+    opr = int(np.linalg.det(A))
+    for i in range(0,N):
+        diag = diag + F[i,i]
+    print(' ')
+    for i in range(0,N):
+        diag = diag + F[i, N - 1 - i]
+    print('Определитель A:', opr)
+    print('Сумма диагональных чисел F:', diag)
+    print('')
+    opr = [1 / opr]
+    if opr > diag:
+        print('A**-1')
+        A_obr = np.linalg.inv(A)
+        print(A_obr)
+        print(' ')
+        print("A**t")
+        At = np.transpose(A)
+        print(At)
+        print(' ')
+        print("A**-1 * A**t")
+        Proiz = np.dot(A_obr, At)
+        print(Proiz)
+        print(' ')
+        print("(A-1 * At) - (K * F)")
+        Raz = (Proiz - (np.multiply(K,F)))
+        print(Raz)
+    elif opr < diag:
+        print('G')
+        G = np.copy(np.tril(A))
+        print(G)
+        print(' ')
+        print('F**-1')
+        F_obr = np.linalg.inv(F)
+        print(F_obr)
+        print('(A + G - F**-1)* K')
+        Proz = np.multiply((A + G + F_obr), K)
+        print(Proz)
+    grap1 = [np.mean(abs(F[i, ::])) for i in range(N)]
+    grap1 = int(sum(grap1))
+    fixg, grap2 = plt.subplots(2, 2, figsize=(11, 8))
+    x = list(range(1, N+1))
+    for j in range(N):
+        y = list(F[j, ::])
+        grap2[0, 0].plot(x, y, ',-', label=f"{j + 1} строка.")
+        grap2[0, 0].set(title="График с использованием функции plot:", xlabel='Номер элемента в строке', ylabel='Значение элемента')
+        grap2[0, 0].grid()
+        grap2[0, 1].bar(x, y, 0.4, label=f"{j + 1} строка.")
+        grap2[0, 1].set(title="График с использованием функции bar:", xlabel='Номер элемента в строке', ylabel='Значение элемента')
+        if N <= 10:
+            grap2[0, 1].legend(loc='lower right')
+            grap2[0, 1].legend(loc='lower right')
+    exp = [0] * (N - 1)
+    exp.append(0.1)
+    sizes = [round(np.mean(abs(F[i, ::])) * 100 / grap1, 1) for i in range(N)]
+    grap2[1, 0].set_title("График с ипользованием функции pie:")
+    grap2[1, 0].pie(sizes, labels=list(range(1, N + 1)), explode=exp, autopct='%1.1f%%', shadow=True)
+    def map(data, row_labels, col_labels, grap3, bar_gh={}, **kwargs):
+        da = grap3.imshow(data, **kwargs)
+        bar = grap3.figure.colorbar(da, ax=grap3, **bar_gh)
+        grap3.set_xticks(np.arange(data.shape[1]), labels=col_labels)
+        grap3.set_yticks(np.arange(data.shape[0]), labels=row_labels)
+        return da, bar
+    def annoheat(da, data = None, textcolors=("black", "white"), threshold=0):
+        if not isinstance(data, (list, np.ndarray)):
+            data = da.get_array()
+        gh = dict(horizontalalignment="center", verticalalignment="center")
+        texts = []
+        for i in range(data.shape[0]):
+            for j in range(data.shape[1]):
+                gh.update(color=textcolors[int(data[i, j] > threshold)])
+                text = da.axes.text(j, i, data[i, j], **gh)
+                texts.append(text)
+        return texts
+    da, bar = map(F, list(range(N)), list(range(N)), grap3=grap2[1, 1], cmap="magma_r")
+    texts = annoheat(da)
+    grap2[1, 1].set(title="Создание аннотированных тепловых карт:", xlabel="Номер столбца", ylabel="Номер строки")
+    plt.suptitle("Использование библиотеки matplotlib")
+    plt.tight_layout()
+    plt.show()
+else:
+    print('Введённое число некорректно')
